@@ -1,0 +1,1 @@
+export default function LoadingBoard() { return <div className="page-stack" role="status" aria-label="Loading board"><div className="skeleton skeleton-title" /><div className="kanban-board">{Array.from({ length: 5 }, (_, index) => <div className="skeleton skeleton-column" key={index} />)}</div></div>; }

@@ -1,0 +1,1 @@
+export default function LoadingAnalytics() { return <div className="page-stack" role="status" aria-label="Loading analytics"><div className="skeleton skeleton-title" /><div className="analytics-kpis">{Array.from({ length: 6 }, (_, index) => <div className="skeleton skeleton-card" key={index} />)}</div><div className="skeleton skeleton-panel" /></div>; }

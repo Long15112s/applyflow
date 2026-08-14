@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ApplicationStatus {
+  SAVED
+  APPLIED
+  SCREENING
+  INTERVIEW
+  OFFER
+  REJECTED
+  WITHDRAWN
+}
+
+enum WorkMode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum ApplicationEventType {
+  APPLICATION_CREATED
+  APPLICATION_UPDATED
+  STATUS_CHANGED
+  NOTE_ADDED
+  INTERVIEW_SCHEDULED
+  CONTACT_ADDED
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String?       @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  applications Application[]
+  companies    Company[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Company {
+  id           String        @id @default(cuid())
+  userId       String
+  name         String
+  website      String?
+  industry     String?
+  location     String?
+  notes        String?
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[]
+  contacts     Contact[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Application {
+  id             String            @id @default(cuid())
+  userId         String
+  companyId      String
+  position       String
+  status         ApplicationStatus @default(SAVED)
+  location       String?
+  workMode       WorkMode?
+  salaryMin      Int?
+  salaryMax      Int?
+  currency       String            @default("EUR")
+  jobUrl         String?
+  jobDescription String?
+  appliedAt      DateTime?
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contacts       Contact[]
+  events         ApplicationEvent[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([userId, status])
+  @@index([companyId])
+  @@index([updatedAt])
+}
+
+model Contact {
+  id            String       @id @default(cuid())
+  companyId     String
+  applicationId String?
+  name          String
+  role          String?
+  email         String?
+  phone         String?
+  linkedinUrl   String?
+  notes         String?
+  company       Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([companyId])
+  @@index([applicationId])
+}
+
+model ApplicationEvent {
+  id            String               @id @default(cuid())
+  applicationId String
+  type          ApplicationEventType
+  description   String
+  application   Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  createdAt     DateTime             @default(now())
+
+  @@index([applicationId, createdAt])
+}

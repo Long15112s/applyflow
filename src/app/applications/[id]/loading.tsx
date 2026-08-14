@@ -1,0 +1,1 @@
+export default function LoadingApplication() { return <div className="page-stack" role="status" aria-label="Loading application"><div className="skeleton skeleton-title" /><div className="detail-grid"><div className="skeleton skeleton-panel" /><div className="skeleton skeleton-panel skeleton-panel-short" /></div></div>; }
