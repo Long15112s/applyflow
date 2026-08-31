@@ -1,24 +1,54 @@
 "use client";
 
-import { useActionState } from "react";
-import { updateApplicationStatus, type ActionState } from "@/app/applications/actions";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { changeApplicationStatus } from "@/app/applications/actions";
 import type { ApplicationStatus } from "@/generated/prisma/enums";
 import { APPLICATION_STATUSES, APPLICATION_STATUS_LABELS } from "@/lib/application-status";
 
-const initialState: ActionState = { error: null };
-
 export function StatusForm({ applicationId, status }: { applicationId: string; status: ApplicationStatus }) {
-  const [state, action, pending] = useActionState(updateApplicationStatus, initialState);
+  const router = useRouter();
+  const [selectedStatus, setSelectedStatus] = useState(status);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setSelectedStatus(status);
+  }, [status]);
+
+  function handleStatusChange(nextStatus: ApplicationStatus) {
+    const previousStatus = selectedStatus;
+
+    setSelectedStatus(nextStatus);
+    setError(null);
+
+    startTransition(async () => {
+      const result = await changeApplicationStatus(applicationId, nextStatus);
+      if (result.error) {
+        setSelectedStatus(previousStatus);
+        setError(result.error);
+        return;
+      }
+
+      setSelectedStatus(nextStatus);
+      router.refresh();
+    });
+  }
+
   return (
-    <form action={action} className="status-form">
-      <input name="applicationId" type="hidden" value={applicationId} />
+    <div className="status-form">
       <label>
         <span>Status</span>
-        <select name="status" defaultValue={status} disabled={pending} onChange={(event) => event.currentTarget.form?.requestSubmit()}>
+        <select
+          name="status"
+          value={selectedStatus}
+          disabled={pending}
+          onChange={(event) => handleStatusChange(event.target.value as ApplicationStatus)}
+        >
           {APPLICATION_STATUSES.map(item => <option key={item} value={item}>{APPLICATION_STATUS_LABELS[item]}</option>)}
         </select>
       </label>
-      <span className="form-hint" aria-live="polite">{pending ? "Saving…" : state.error}</span>
-    </form>
+      <span className="form-hint" aria-live="polite">{pending ? "Saving…" : error}</span>
+    </div>
   );
 }
