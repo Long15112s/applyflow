@@ -51,6 +51,14 @@ enum CalendarEventStatus {
   CANCELLED
 }
 
+enum JobSeniority {
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+  UNKNOWN
+}
+
 model User {
   id            String        @id @default(cuid())
   name          String?
@@ -139,6 +147,7 @@ model Application {
   contacts       Contact[]
   events         ApplicationEvent[]
   calendarEvents CalendarEvent[]
+  jobAnalysis    JobAnalysis?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
@@ -197,4 +206,21 @@ model CalendarEvent {
 
   @@index([userId, startsAt])
   @@index([applicationId])
+}
+
+model JobAnalysis {
+  id               String       @id @default(cuid())
+  applicationId    String       @unique
+  summary           String
+  seniority         JobSeniority
+  requiredSkills    Json
+  preferredSkills   Json
+  responsibilities Json
+  requirements      Json
+  niceToHaves       Json
+  keywords          Json
+  model             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  application       Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }

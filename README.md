@@ -11,6 +11,7 @@ ApplyFlow is a full-stack job application tracker for keeping opportunities orga
 - Server-enforced user isolation and IDOR protection
 - User-scoped analytics, outcomes, recent activity, and attention hints
 - Responsive desktop and mobile navigation
+- Structured AI job-description analysis with persisted results
 
 ## Tech stack
 
@@ -71,9 +72,22 @@ DATABASE_URL=
 AUTH_SECRET=
 AUTH_GITHUB_ID=
 AUTH_GITHUB_SECRET=
+OPENAI_API_KEY=
+OPENAI_MODEL=
 ```
 
 Generate `AUTH_SECRET` with a cryptographically secure random value, for example `openssl rand -hex 32`.
+
+## AI Job Analysis
+
+Set `OPENAI_API_KEY` and `OPENAI_MODEL` in the server environment to enable explicit job-description analysis from an Application detail page. The feature uses the OpenAI Responses API with strict Structured Outputs and `store: false`. Keys remain server-side; builds and page loads do not call OpenAI.
+
+For local development, choose a Responses API model available to your OpenAI project and set:
+
+```dotenv
+OPENAI_API_KEY="your-server-side-key"
+OPENAI_MODEL="your-model-id"
+```
 
 ## GitHub OAuth
 

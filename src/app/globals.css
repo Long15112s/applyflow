@@ -368,3 +368,25 @@ dd { margin: 0; font-weight: 700; }
 @media (max-width: 420px) {
   .export-date-grid { grid-template-columns: 1fr; }
 }
+/* AI job analysis */
+.job-analysis-panel .panel-heading { align-items: center; }
+.analysis-action { display: grid; justify-items: end; gap: 4px; min-width: 170px; }
+.analysis-empty-state { padding: 28px 24px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.analysis-empty-state p { margin: 0; color: var(--muted); line-height: 1.55; }
+.analysis-content { padding: 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.analysis-content section { min-width: 0; display: grid; align-content: start; gap: 10px; }
+.analysis-content section > span:first-child { color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-size: 10px; font-weight: 800; }
+.analysis-summary { grid-column: 1 / -1; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.analysis-summary p { margin: 0; color: #42423e; line-height: 1.65; }
+.analysis-content ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; color: #42423e; font-size: 13px; line-height: 1.5; }
+.skill-list, .keyword-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.skill-list span, .keyword-list span, .seniority-badge { width: fit-content; padding: 6px 9px; border-radius: 999px; background: #edf2ff; color: #234783; font-size: 11px; font-weight: 750; }
+.keyword-list span { background: var(--surface-soft); color: var(--muted); }
+.analysis-empty-copy { margin: 0; color: var(--muted); font-size: 12px; }
+.analysis-content footer { grid-column: 1 / -1; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+@media (max-width: 640px) {
+  .job-analysis-panel .panel-heading, .analysis-empty-state { align-items: stretch; flex-direction: column; }
+  .analysis-action { justify-items: stretch; width: 100%; }
+  .analysis-content { grid-template-columns: 1fr; }
+  .analysis-summary, .analysis-content footer { grid-column: auto; }
+}
