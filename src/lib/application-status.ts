@@ -12,6 +12,16 @@ export const APPLICATION_STATUS_LABELS: Record<ApplicationStatusValue, string> =
   WITHDRAWN: "Withdrawn"
 };
 
+export const APPLICATION_STATUS_LABELS_DE: Record<ApplicationStatusValue, string> = {
+  SAVED: "Gespeichert",
+  APPLIED: "Beworben",
+  SCREENING: "Vorauswahl",
+  INTERVIEW: "Vorstellungsgespräch",
+  OFFER: "Angebot",
+  REJECTED: "Absage",
+  WITHDRAWN: "Zurückgezogen"
+};
+
 export const BOARD_STATUSES = [
   ApplicationStatus.SAVED,
   ApplicationStatus.APPLIED,

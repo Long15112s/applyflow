@@ -30,6 +30,25 @@ enum ApplicationEventType {
   NOTE_ADDED
   INTERVIEW_SCHEDULED
   CONTACT_ADDED
+  CALENDAR_EVENT_CREATED
+  CALENDAR_EVENT_UPDATED
+  CALENDAR_EVENT_CANCELLED
+}
+
+enum CalendarEventType {
+  PHONE_SCREEN
+  HR_INTERVIEW
+  TECHNICAL_INTERVIEW
+  INTERVIEW
+  FOLLOW_UP
+  DEADLINE
+  OTHER
+}
+
+enum CalendarEventStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
 }
 
 model User {
@@ -42,6 +61,7 @@ model User {
   sessions      Session[]
   applications Application[]
   companies    Company[]
+  calendarEvents CalendarEvent[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -118,6 +138,7 @@ model Application {
   company        Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   contacts       Contact[]
   events         ApplicationEvent[]
+  calendarEvents CalendarEvent[]
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
@@ -154,4 +175,26 @@ model ApplicationEvent {
   createdAt     DateTime             @default(now())
 
   @@index([applicationId, createdAt])
+}
+
+model CalendarEvent {
+  id            String              @id @default(cuid())
+  userId        String
+  applicationId String
+  title         String
+  type          CalendarEventType
+  status        CalendarEventStatus @default(SCHEDULED)
+  startsAt      DateTime
+  endsAt        DateTime?
+  timeZone      String
+  location      String?
+  meetingUrl    String?
+  notes         String?
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application   Application         @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([userId, startsAt])
+  @@index([applicationId])
 }

@@ -1,0 +1,3 @@
+export function ApplicationExportControls({ disabled }: { disabled: boolean }) {
+  return <details className="export-controls"><summary className={`button button-secondary${disabled ? " is-disabled" : ""}`}>Export Excel</summary><form action="/api/applications/export" method="get"><p>Submitted applications only. Drafts with status Saved are excluded.</p><div className="export-date-grid"><label><span>From</span><input name="from" type="date" /></label><label><span>To</span><input name="to" type="date" /></label></div><button className="button button-primary" disabled={disabled} type="submit">Download .xlsx</button>{disabled ? <small>No submitted applications to export.</small> : null}</form></details>;
+}

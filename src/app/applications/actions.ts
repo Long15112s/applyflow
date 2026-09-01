@@ -6,8 +6,15 @@ import { requireUser } from "@/lib/current-user";
 import { prisma } from "@/lib/db";
 import { ApplicationStatus, WorkMode } from "@/generated/prisma/enums";
 
+export type DuplicateWarning = {
+  level: "COMPANY" | "ROLE" | "JOB_URL";
+  message: string;
+  applications: Array<{ id: string; company: string; position: string; status: ApplicationStatus; appliedAt: string | null }>;
+};
+
 export type ActionState = {
   error: string | null;
+  duplicateWarning?: DuplicateWarning;
 };
 
 const applicationStatuses = new Set(Object.values(ApplicationStatus));
@@ -58,22 +65,55 @@ function errorState(error: unknown): ActionState {
   return { error: error instanceof Error ? error.message : "Something went wrong." };
 }
 
+function normalizeText(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
+}
+
+async function findDuplicateWarning(userId: string, companyName: string, position: string, jobUrl: string | null): Promise<DuplicateWarning | null> {
+  const candidates = await prisma.application.findMany({
+    where: {
+      userId,
+      OR: [
+        { company: { name: { equals: companyName, mode: "insensitive" } } },
+        ...(jobUrl ? [{ jobUrl }] : [])
+      ]
+    },
+    include: { company: true },
+    orderBy: { appliedAt: "desc" }
+  });
+  const normalizedCompany = normalizeText(companyName);
+  const normalizedPosition = normalizeText(position);
+  const companyMatches = candidates.filter(item => normalizeText(item.company.name) === normalizedCompany);
+  const roleMatches = companyMatches.filter(item => normalizeText(item.position) === normalizedPosition);
+  const urlMatches = jobUrl ? candidates.filter(item => item.jobUrl === jobUrl) : [];
+  const serialize = (items: typeof candidates) => items.map(item => ({ id: item.id, company: item.company.name, position: item.position, status: item.status, appliedAt: item.appliedAt?.toISOString() ?? null }));
+  if (urlMatches.length) return { level: "JOB_URL", message: "This job posting already exists in ApplyFlow.", applications: serialize(urlMatches) };
+  if (roleMatches.length) return { level: "ROLE", message: "You already have an application for this position at this company.", applications: serialize(roleMatches) };
+  if (companyMatches.length) return { level: "COMPANY", message: `You already have ${companyMatches.length} ${companyMatches.length === 1 ? "application" : "applications"} at ${companyMatches[0].company.name}.`, applications: serialize(companyMatches) };
+  return null;
+}
+
 export async function createApplication(_state: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
   let applicationId: string;
   try {
     const position = requiredText(formData, "position", "Position");
     const companyName = requiredText(formData, "company", "Company");
+    const jobUrl = optionalUrl(formData, "jobUrl");
     const statusValue = optionalText(formData.get("status")) ?? ApplicationStatus.APPLIED;
     if (!applicationStatuses.has(statusValue as ApplicationStatus)) throw new Error("Status is invalid.");
-    const company = await prisma.company.upsert({
-      where: { userId_name: { userId: user.id, name: companyName } }, update: {},
-      create: { userId: user.id, name: companyName, location: optionalText(formData.get("location")) }
-    });
+
+    if (String(formData.get("confirmDuplicates") ?? "") !== "true") {
+      const duplicateWarning = await findDuplicateWarning(user.id, companyName, position, jobUrl);
+      if (duplicateWarning) return { error: null, duplicateWarning };
+    }
+
+    const existingCompany = await prisma.company.findFirst({ where: { userId: user.id, name: { equals: companyName, mode: "insensitive" } } });
+    const company = existingCompany ?? await prisma.company.create({ data: { userId: user.id, name: companyName, location: optionalText(formData.get("location")) } });
     const application = await prisma.application.create({
       data: {
         userId: user.id, companyId: company.id, position, status: statusValue as ApplicationStatus,
-        location: optionalText(formData.get("location")), jobUrl: optionalUrl(formData, "jobUrl"),
+        location: optionalText(formData.get("location")), jobUrl,
         jobDescription: optionalText(formData.get("jobDescription")), appliedAt: new Date(),
         events: { create: { type: "APPLICATION_CREATED", description: "Application added to ApplyFlow" } }
       }
@@ -86,7 +126,6 @@ export async function createApplication(_state: ActionState, formData: FormData)
   }
   redirect(`/applications/${applicationId}`);
 }
-
 export async function deleteApplication(formData: FormData) {
   const applicationId = String(formData.get("applicationId") ?? "");
   const user = await requireUser();

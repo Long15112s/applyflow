@@ -1,0 +1,1 @@
+export default function CalendarLoading() { return <div className="page-stack calendar-page" aria-busy="true"><div className="skeleton skeleton-title" /><div className="calendar-layout"><div className="skeleton skeleton-panel" /><div className="skeleton skeleton-panel-short" /></div></div>; }
